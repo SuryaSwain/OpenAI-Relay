@@ -49,32 +49,32 @@ async def generate_response(request: ResponseRequest):
         raise HTTPException(status_code=500, detail="Failed to generate response.")
 
 
-def get_transcription(wav_file_path):
-    """Transcribe audio from a WAV file using OpenAI's Whisper model."""
-    try:
-        with open(wav_file_path, "rb") as audio_file:
-            result = openai.Audio.transcribe(model="whisper-1", file=audio_file, language='en')
-        return result['text'].strip()
-    except Exception as e:
-        logging.error(f"Transcription error: {str(e)}")
-        return ''
+# def get_transcription(wav_file_path):
+#     """Transcribe audio from a WAV file using OpenAI's Whisper model."""
+#     try:
+#         with open(wav_file_path, "rb") as audio_file:
+#             result = openai.Audio.transcribe(model="whisper-1", file=audio_file, language='en')
+#         return result['text'].strip()
+#     except Exception as e:
+#         logging.error(f"Transcription error: {str(e)}")
+#         return ''
 
-@app.post("/transcribe-audio/")
-async def transcribe_audio(file: UploadFile):
-    """API endpoint for transcribing audio files."""
-    if file.content_type != "audio/wav":
-        raise HTTPException(status_code=400, detail="Only WAV files are supported.")
+# @app.post("/transcribe-audio/")
+# async def transcribe_audio(file: UploadFile):
+#     """API endpoint for transcribing audio files."""
+#     if file.content_type != "audio/wav":
+#         raise HTTPException(status_code=400, detail="Only WAV files are supported.")
     
-    try:
-        file_path = f"/tmp/{file.filename}"
-        with open(file_path, "wb") as buffer:
-            buffer.write(await file.read())
+#     try:
+#         file_path = f"/tmp/{file.filename}"
+#         with open(file_path, "wb") as buffer:
+#             buffer.write(await file.read())
 
-        # Here you may also want to log that the file was written successfully
-        logging.info(f"File saved to {file_path}")
+#         # Here you may also want to log that the file was written successfully
+#         logging.info(f"File saved to {file_path}")
 
-        transcription = get_transcription(file_path)
-        return {"transcription": transcription}
-    except Exception as e:
-        logging.error(f"Failed to transcribe audio: {str(e)}")
-        raise HTTPException(status_code=500, detail="Failed to transcribe audio.")
+#         transcription = get_transcription(file_path)
+#         return {"transcription": transcription}
+#     except Exception as e:
+#         logging.error(f"Failed to transcribe audio: {str(e)}")
+#         raise HTTPException(status_code=500, detail="Failed to transcribe audio.")
