@@ -22,8 +22,33 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-class PromptRequest(BaseModel):
+class ResponseRequest(BaseModel):
     prompt: str
+    openai_api_key: str
+
+@app.post("/generate-response/")
+async def generate_response(request: ResponseRequest):
+    openai.api_key = request.openai_api_key
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[{"role": "system", "content": request.prompt}],
+            temperature=0.0
+        )
+        response_text = response.choices[0].message.content
+    except openai.error.OpenAIError as e:
+        logging.error(f"OpenAI API error: {str(e)}")
+    except KeyError as e:
+        logging.error(f"Key error: {str(e)}")
+    except Exception as e:
+        logging.error(f"Unexpected error: {str(e)}")
+    response_text = ''
+
+    if response_text:
+        return {"response": response_text}
+    else:
+        raise HTTPException(status_code=500, detail="Failed to generate response.")
+
 
 def get_transcription(wav_file_path):
     """Transcribe audio from a WAV file using OpenAI's Whisper model."""
@@ -34,24 +59,6 @@ def get_transcription(wav_file_path):
     except Exception as e:
         logging.error(f"Transcription error: {str(e)}")
         return ''
-
-def get_response(prompt: str) -> str:
-    """Generate a response from the OpenAI API using the provided transcript."""
-    try:
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=[{"role": "system", "content": prompt}],
-            temperature=0.0
-        )
-        return response.choices[0].message.content
-    except openai.error.OpenAIError as e:
-        logging.error(f"OpenAI API error: {str(e)}")
-    except KeyError as e:
-        logging.error(f"Key error: {str(e)}")
-    except Exception as e:
-        logging.error(f"Unexpected error: {str(e)}")
-    return ''
-
 
 @app.post("/transcribe-audio/")
 async def transcribe_audio(file: UploadFile):
@@ -72,14 +79,3 @@ async def transcribe_audio(file: UploadFile):
     except Exception as e:
         logging.error(f"Failed to transcribe audio: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to transcribe audio.")
-
-
-@app.post("/generate-response/")
-async def generate_response(request: PromptRequest):
-    """API endpoint for generating a response based on a prompt."""
-    prompt = request.prompt
-    response_text = get_response(prompt)
-    if response_text:
-        return {"response": response_text}
-    else:
-        raise HTTPException(status_code=500, detail="Failed to generate response.")
