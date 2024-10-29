@@ -42,7 +42,6 @@ async def generate_response(request: ResponseRequest):
         logging.error(f"Key error: {str(e)}")
     except Exception as e:
         logging.error(f"Unexpected error: {str(e)}")
-    response_text = ''
 
     if response_text:
         return {"response": response_text}
